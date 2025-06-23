@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial; }
+        h1 { color: #333; }
+        li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Your Travel Itinerary</h1>
+    <ul>
+        {% for item in itinerary %}
+        <li>
+            <strong>{{ item.date }}</strong>: {{ item.activity }} in {{ item.destination }}
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Itinerary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <h1><i class="fas fa-plane-departure"></i> Your Travel Itinerary</h1>
+
+    <ul>
+        {% for item in itinerary %}
+        <li>
+            <i class="fas fa-map-marker-alt"></i>
+            <strong>{{ item.date }}</strong>: {{ item.activity }} in 
+            <a href="https://www.google.com/maps/search/{{ item.destination }}" target="_blank">
+                {{ item.destination }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <p>✅ Your itinerary has also been added to Google Calendar.</p>
+
+    <a href="/">🔄 Plan Another Trip</a>
+
+    <form id="pdfForm" method="POST">
+        <input type="hidden" id="pdfData" name="pdfData">
+        <button type="button" onclick="downloadPDF()">📄 Download PDF</button>
+    </form>
+
+<script>
+const itineraryData = JSON.parse('{{ itinerary | tojson | safe }}');
+console.log(itineraryData);
+
+function downloadPDF() {
+    fetch('/download', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            itinerary: itineraryData
+        })
+    })
+    .then(res => res.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "itinerary.pdf";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    });
+}
+</script>
+</body>
+</html>
+
+

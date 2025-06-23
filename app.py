@@ -1,13 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, make_response
 from datetime import datetime, timedelta
-import os.path
+import os
+import json
+from dotenv import load_dotenv
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from flask import make_response
 from xhtml2pdf import pisa
 from io import BytesIO
 
 app = Flask(__name__)
+
+# Load credentials from .env
+load_dotenv()
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+
+# Convert the JSON string to a dictionary
+creds_dict = json.loads(creds_json)
+creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -18,9 +28,8 @@ def index():
         activities_raw = request.form['activities']
         activities = [a.strip() for a in activities_raw.split(',') if a.strip()]
 
-
         itinerary = generate_itinerary(destination, start_date, end_date, activities)
-        add_to_google_calendar(itinerary)  # You must be authenticated
+        add_to_google_calendar(itinerary)
 
         return render_template('itinerary.html', itinerary=itinerary)
 
@@ -29,7 +38,6 @@ def index():
 @app.route('/download', methods=['POST'])
 def download():
     itinerary = request.json.get('itinerary')
-
     html = render_template('pdf_template.html', itinerary=itinerary)
 
     pdf = BytesIO()
@@ -39,7 +47,6 @@ def download():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'attachment; filename=itinerary.pdf'
     return response
-
 
 def generate_itinerary(destination, start_date, end_date, activities):
     itinerary = []
@@ -59,12 +66,8 @@ def generate_itinerary(destination, start_date, end_date, activities):
     return itinerary
 
 def add_to_google_calendar(itinerary):
-    SCOPES = ['https://www.googleapis.com/auth/calendar']
-    creds = service_account.Credentials.from_service_account_file(
-        'credentials.json', scopes=SCOPES
-    )
-
     service = build('calendar', 'v3', credentials=creds)
+    calendar_id = "87fc7b3233cbf7bcc0b93dba01067e41de1cf29a5e6a6236d1373c31082be394@group.calendar.google.com"
 
     for item in itinerary:
         event = {
@@ -72,10 +75,7 @@ def add_to_google_calendar(itinerary):
             'start': {'date': item['date'], 'timeZone': 'UTC'},
             'end': {'date': item['date'], 'timeZone': 'UTC'},
         }
-
-        calendar_id = "87fc7b3233cbf7bcc0b93dba01067e41de1cf29a5e6a6236d1373c31082be394@group.calendar.google.com"
         service.events().insert(calendarId=calendar_id, body=event).execute()
-
 
 if __name__ == '__main__':
     app.run(debug=True)

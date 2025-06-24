@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: travel-itinerary-planner
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GOOGLE_CREDENTIALS_JSON
+        value: your_escaped_google_json_here
+      - key: GOOGLE_CALENDAR_ID
+        value: your_calendar_id_here

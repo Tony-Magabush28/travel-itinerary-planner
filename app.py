@@ -67,13 +67,12 @@ def generate_itinerary(destination, start_date, end_date, activities):
 
 def add_to_google_calendar(itinerary):
     service = build('calendar', 'v3', credentials=creds)
-    calendar_id = "87fc7b3233cbf7bcc0b93dba01067e41de1cf29a5e6a6236d1373c31082be394@group.calendar.google.com"
-
+    calendar_id = os.getenv("GOOGLE_CALENDAR_ID")
     for item in itinerary:
         event = {
             'summary': f"{item['activity']} in {item['destination']}",
             'start': {'date': item['date'], 'timeZone': 'UTC'},
-            'end': {'date': item['date'], 'timeZone': 'UTC'},
+            'end': {'date': item['date'], 'timeZone': 'UTC'}
         }
         service.events().insert(calendarId=calendar_id, body=event).execute()
 
